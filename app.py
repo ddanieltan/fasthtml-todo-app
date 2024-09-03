@@ -4,8 +4,14 @@ from fasthtml.common import *
 def render(todo):
     tid = f"todo-{todo.id}"
     toggle = A("Toggle", hx_get=f"/toggle/{todo.id}", hx_target=f"#{tid}")
-    delete = A("Delete", hx_delete=f"/{todo.id}", hx_target=f"#{tid}")
+    delete = A(
+        "Delete", hx_delete=f"/{todo.id}", hx_target=f"#{tid}", hx_swap="outerHTML"
+    )
     return Li(toggle, todo.title + (" ✅" if todo.done else ""), delete, id=tid)
+
+
+def mk_input():
+    return Input(placeholder="Add a new todo", id="title", hx_swap_oob="true")
 
 
 app, rt, todos, Todo = fast_app(
@@ -16,7 +22,7 @@ app, rt, todos, Todo = fast_app(
 @rt("/")
 def get():
     f = Form(
-        Group(Input(placeholder="Add a new todo", name="title"), Button("Save")),
+        Group(mk_input(), Button("Save")),
         hx_post="/",
         hx_target="#todo-list",
         hx_swap="beforeend",
@@ -26,7 +32,7 @@ def get():
 
 @rt("/")
 def post(todo: Todo):
-    todos.insert(todo)
+    return todos.insert(todo), mk_input()
 
 
 @rt("/{tid}")
